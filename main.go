@@ -2,27 +2,41 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"log"
 	"math/big"
+	"os"
 	"runtime"
 	"strconv"
 
 	"github.com/remeh/sizedwaitgroup"
 )
 
-const startNPrime = 2445
+const startNPrime = 2444
 
 func main() {
-	//Starting n=X
+	//Logging setup
+	logName := "nPrimes.log"
+	lf, err := os.OpenFile(logName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return
+	}
+	defer lf.Close()
+
+	mw := io.MultiWriter(os.Stdout, lf)
+	log.SetOutput(mw)
+
 	var x int64 = 0
 
 	//Wait group with cpu threds
 	swg := sizedwaitgroup.New(runtime.NumCPU())
-	fmt.Println("Starting", runtime.NumCPU(), "threads.")
+	log.Println("Starting", runtime.NumCPU(), "threads.")
 
-	fmt.Print("Checking for n=x primes: ")
+	fmt.Println("Checking for n=x primes: ")
 	for x = startNPrime; x < 9223372036854775807; x++ {
 		swg.Add()
-		fmt.Print("n=", x, "?, ")
+		log.Print("n=", x, "? ")
 		go func(val int64) {
 
 			buf := ""
@@ -40,7 +54,7 @@ func main() {
 			temp.SetString(buf, 10)
 
 			if temp.ProbablyPrime(20) {
-				fmt.Println("POSSIBLE PRIME: n=", val)
+				log.Println("POSSIBLE PRIME: n=", val)
 				isPrime(val, temp)
 			}
 			swg.Done()
@@ -56,10 +70,10 @@ func isPrime(x int64, num *big.Int) bool {
 
 	for i.SetString("2", 10); i.Cmp(iSq) == -1; i.Add(i, big.NewInt(1)) {
 		if num.Mod(num, i) == big.NewInt(0) {
-			fmt.Println("n=", x, " divisible by", i, ", ")
+			log.Println("*** NOT PRIME *** n=", x, " divisible by", i, ", ")
 			return false
 		}
 	}
-	fmt.Println("\n***** n=", x, " is prime! *****")
+	log.Println("\n***** n=", x, " is prime! *****")
 	return true
 }
