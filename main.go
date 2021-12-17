@@ -58,7 +58,10 @@ func main() {
 			fmt.Print("Checking n=", x, ", ")
 			if temp.ProbablyPrime(0) {
 				log.Println("POSSIBLE PRIME, VERIFYING: n=", val)
-				isPrime(val, temp)
+				if temp.ProbablyPrime(20) {
+					log.Println("PROBABLE PRIME, VERIFYING: n=", val)
+					isPrime(val, temp)
+				}
 			} else {
 				//Print failure, do not log
 				fmt.Print("!n=", val, ", ")
