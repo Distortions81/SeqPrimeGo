@@ -9,14 +9,18 @@ import (
 	"github.com/remeh/sizedwaitgroup"
 )
 
+const startNPrime = 1
+
 func main() {
-	var x int64 = 0
+	var x int64 = 2446
 
 	swg := sizedwaitgroup.New(runtime.NumCPU())
 	fmt.Println("Starting", runtime.NumCPU(), "threads.")
 
-	for x = 1; x < 9223372036854775807; x++ {
+	fmt.Print("Checking for n=x primes: ")
+	for x = startNPrime; x < 9223372036854775807; x++ {
 		swg.Add()
+		fmt.Print("n=", x, "?, ")
 		go func(val int64) {
 
 			buf := ""
@@ -33,27 +37,24 @@ func main() {
 			temp := big.NewInt(0)
 			temp.SetString(buf, 10)
 
-			if isPrime(temp) {
-				fmt.Print(val, ", ")
-
-			} else {
-				//fmt.Print("!N=", val, ", ")
-			}
+			isPrime(x, temp)
 			swg.Done()
 		}(x)
 	}
 	swg.Wait()
 }
 
-func isPrime(num *big.Int) bool {
+func isPrime(x int64, num *big.Int) bool {
 	i := big.NewInt(0)
 	iSq := big.NewInt(0)
 	iSq = iSq.Sqrt(num)
 
 	for i.SetString("2", 10); i.Cmp(iSq) == -1; i.Add(i, big.NewInt(1)) {
 		if num.Mod(num, i) == big.NewInt(0) {
+			fmt.Println("n=", x, " divisible by", i, ", ")
 			return false
 		}
 	}
+	fmt.Println("\n***** n=", x, " is prime! *****")
 	return true
 }
