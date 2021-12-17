@@ -12,7 +12,7 @@ import (
 	"github.com/remeh/sizedwaitgroup"
 )
 
-const startNPrime = 1000000
+const startNPrime = 2
 
 func main() {
 	//Logging setup
@@ -27,25 +27,34 @@ func main() {
 	mw := io.MultiWriter(os.Stdout, lf)
 	log.SetOutput(mw)
 
-	var x int64 = 0
+	//Init
+	var x int64 = startNPrime
+	buf := ""
 
 	//Wait group with cpu threds
 	swg := sizedwaitgroup.New(runtime.NumCPU())
 	log.Println("Starting", runtime.NumCPU(), "threads.")
 
-	fmt.Println("Checking for n=x primes: ")
-	for x = startNPrime; x < 9223372036854775807; x++ {
+	log.Println("Creating first big int...")
+	// Count up
+	var z int64 = 0
+	for z = 1; z <= x; z++ {
+		buf = buf + strconv.FormatInt(z, 10)
+	}
+	//log.Println(buf)
+
+	log.Println("Checking for n=x primes: ")
+	for x = z; x < 9223372036854775807; x++ {
 		swg.Add()
 		//log.Print("n=", x, "? ")
-		go func(val int64) {
-
-			buf := ""
+		nbuf := buf
+		go func(nbuf string, val int64, z int64) {
 			var y int64 = 0
-			log.Print("Creating big int for n=", val)
+			//log.Print("Creating big int for n=", val)
 
 			// Count up
-			for y = 1; y < val; y++ {
-				buf = buf + strconv.FormatInt(y, 10)
+			for y = z; y <= val; y++ {
+				nbuf = nbuf + strconv.FormatInt(y, 10)
 			}
 			//Count down
 			//for y = y - 1; y > 0; y-- {
@@ -53,17 +62,18 @@ func main() {
 			//}
 
 			temp := big.NewInt(0)
-			temp.SetString(buf, 10)
+			temp.SetString(nbuf, 10)
 
-			log.Print("Checking if n=", val, " is a probable prime.")
+			//log.Print("Checking if n=", val, " is a probable prime.")
 			if temp.ProbablyPrime(0) {
 				log.Println("POSSIBLE PRIME, VERIFYING: n=", val)
 				isPrime(val, temp)
 			} else {
-				log.Println("not a probable prime: n=", val)
+				//log.Println("not a probable prime: n=", val)
+				//log.Println(nbuf)
 			}
 			swg.Done()
-		}(x)
+		}(nbuf, x, z)
 	}
 	swg.Wait()
 }
