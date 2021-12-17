@@ -1,4 +1,4 @@
-module PrimeCheck
+module SeqPrimeGo
 
 go 1.17
 
