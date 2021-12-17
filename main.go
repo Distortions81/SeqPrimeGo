@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -28,7 +29,7 @@ func main() {
 
 	//Init
 	var x int64 = startNPrime
-	buf := ""
+	var buf bytes.Buffer
 
 	//Wait group with cpu threds
 	swg := sizedwaitgroup.New(runtime.NumCPU())
@@ -38,19 +39,19 @@ func main() {
 	log.Println("Creating first big.int for n=", x)
 	var z int64 = 0
 	for z = 1; z <= x; z++ {
-		buf = buf + strconv.FormatInt(z, 10)
+		buf.WriteString(strconv.FormatInt(z, 10))
 	}
 
 	//Start checking:
 	log.Println("Checking for n=x primes: ")
 	for x = z; x < 9223372036854775807; x++ {
 
-		buf = buf + strconv.FormatInt(x, 10)
+		buf.WriteString(strconv.FormatInt(x, 10))
 		swg.Add()
-		go func(val int64, valStr string) {
+		go func(val int64, valStr bytes.Buffer) {
 
 			temp := big.NewInt(0)
-			temp.SetString(valStr, 10)
+			temp.SetString(valStr.String(), 10)
 
 			if temp.ProbablyPrime(0) {
 				log.Println("POSSIBLE PRIME, VERIFYING: n=", val)
