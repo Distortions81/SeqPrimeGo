@@ -34,21 +34,22 @@ func main() {
 	log.SetOutput(mw)
 
 	//Wait group with cpu threds
-	threads := runtime.NumCPU() / 2
+	threads := runtime.NumCPU()
+	threads = 1
 	swg := sizedwaitgroup.New(threads)
 	log.Println("Starting", threads, "threads.")
 
 	//Create inital big.int string
 	log.Println("Creating first big int buffer for n=", x)
 	var z int64 = 0
-	for z = 1; z <= x; z++ {
+	for z = 1; z < x; z++ {
 		buf.WriteString(strconv.FormatInt(z, 10))
 	}
 	log.Println("Buffer size:", humanize.Bytes(uint64(buf.Len())))
 
 	//Start checking:
 	log.Println("Checking for n=x primes: ")
-	for x = (z + 1); x < 9223372036854775807; x++ {
+	for x = z; x < 9223372036854775807; x++ {
 
 		buf.WriteString(strconv.FormatInt(x, 10))
 		swg.Add()
