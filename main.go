@@ -7,11 +7,9 @@ import (
 	"log"
 	"math/big"
 	"os"
-	"runtime"
 	"strconv"
 
 	"github.com/dustin/go-humanize"
-	"github.com/remeh/sizedwaitgroup"
 )
 
 const startNPrime = 1000000
@@ -33,12 +31,6 @@ func main() {
 	mw := io.MultiWriter(os.Stdout, lf)
 	log.SetOutput(mw)
 
-	//Wait group with cpu threds
-	threads := runtime.NumCPU()
-	threads = 1
-	swg := sizedwaitgroup.New(threads)
-	log.Println("Starting", threads, "threads.")
-
 	//Create inital big.int string
 	log.Println("Creating first big int buffer for n=", x)
 	var z int64 = 0
@@ -52,28 +44,23 @@ func main() {
 	for x = z; x < 9223372036854775807; x++ {
 
 		buf.WriteString(strconv.FormatInt(x, 10))
-		swg.Add()
-		go func(val int64, valStr string) {
 
-			fmt.Print("Making big.int for n=", val, ", ")
-			temp := big.NewInt(0)
-			temp.SetString(valStr, 10)
+		fmt.Print("Making big.int for n=", x, ", ")
+		temp := big.NewInt(0)
+		temp.SetString(buf.String(), 10)
 
-			fmt.Print("Checking n=", x, ", ")
-			if temp.ProbablyPrime(0) {
-				log.Println("POSSIBLE PRIME: n=", val)
-				if temp.ProbablyPrime(20) {
-					log.Println("PROBABLE PRIME, VERIFYING: n=", val)
-					isPrime(val, temp)
-				}
-			} else {
-				//Print failure, do not log
-				fmt.Print("!n=", val, ", ")
+		fmt.Print("Checking n=", x, ", ")
+		if temp.ProbablyPrime(0) {
+			log.Println("POSSIBLE PRIME: n=", x)
+			if temp.ProbablyPrime(20) {
+				log.Println("PROBABLE PRIME, VERIFYING: n=", x)
+				isPrime(x, temp)
 			}
-			swg.Done()
-		}(x, buf.String())
+		} else {
+			//Print failure, do not log
+			fmt.Print("!n=", x, ", ")
+		}
 	}
-	swg.Wait()
 }
 
 func isPrime(x int64, num *big.Int) bool {
