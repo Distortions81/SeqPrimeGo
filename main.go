@@ -57,7 +57,7 @@ func main() {
 
 			fmt.Print("Checking n=", x, ", ")
 			if temp.ProbablyPrime(0) {
-				log.Println("POSSIBLE PRIME, VERIFYING: n=", val)
+				log.Println("POSSIBLE PRIME: n=", val)
 				if temp.ProbablyPrime(20) {
 					log.Println("PROBABLE PRIME, VERIFYING: n=", val)
 					isPrime(val, temp)
