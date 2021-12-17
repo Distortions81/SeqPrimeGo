@@ -16,6 +16,11 @@ import (
 const startNPrime = 1000000
 
 func main() {
+
+	//Init
+	var x int64 = startNPrime
+	var buf bytes.Buffer
+
 	//Logging setup
 	logName := "nPrimes.log"
 	lf, err := os.OpenFile(logName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
@@ -26,10 +31,6 @@ func main() {
 	defer lf.Close()
 	mw := io.MultiWriter(os.Stdout, lf)
 	log.SetOutput(mw)
-
-	//Init
-	var x int64 = startNPrime
-	var buf bytes.Buffer
 
 	//Wait group with cpu threds
 	swg := sizedwaitgroup.New(runtime.NumCPU())
@@ -44,7 +45,7 @@ func main() {
 
 	//Start checking:
 	log.Println("Checking for n=x primes: ")
-	for x = z; x < 9223372036854775807; x++ {
+	for x = (z + 1); x < 9223372036854775807; x++ {
 
 		buf.WriteString(strconv.FormatInt(x, 10))
 		swg.Add()
