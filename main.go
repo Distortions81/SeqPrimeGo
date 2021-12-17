@@ -46,9 +46,9 @@ func main() {
 				buf = buf + strconv.FormatInt(y, 10)
 			}
 			//Count down
-			for y = y - 1; y > 0; y-- {
-				buf = buf + strconv.FormatInt(y, 10)
-			}
+			//for y = y - 1; y > 0; y-- {
+			//	buf = buf + strconv.FormatInt(y, 10)
+			//}
 
 			temp := big.NewInt(0)
 			temp.SetString(buf, 10)
