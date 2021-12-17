@@ -36,11 +36,13 @@ func main() {
 	fmt.Println("Checking for n=x primes: ")
 	for x = startNPrime; x < 9223372036854775807; x++ {
 		swg.Add()
-		log.Print("n=", x, "? ")
+		//log.Print("n=", x, "? ")
 		go func(val int64) {
 
 			buf := ""
 			var y int64 = 0
+			log.Print("Creating big int for n=", val)
+
 			// Count up
 			for y = 1; y < val; y++ {
 				buf = buf + strconv.FormatInt(y, 10)
@@ -53,9 +55,12 @@ func main() {
 			temp := big.NewInt(0)
 			temp.SetString(buf, 10)
 
+			log.Print("Checking if n=", val, " is a probable prime.")
 			if temp.ProbablyPrime(0) {
-				log.Println("POSSIBLE PRIME: n=", val)
+				log.Println("POSSIBLE PRIME, VERIFYING: n=", val)
 				isPrime(val, temp)
+			} else {
+				log.Println("not a probable prime: n=", val)
 			}
 			swg.Done()
 		}(x)
