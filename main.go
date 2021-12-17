@@ -15,7 +15,7 @@ import (
 	"github.com/remeh/sizedwaitgroup"
 )
 
-const startNPrime = 1
+const startNPrime = 2
 
 func main() {
 
@@ -36,6 +36,10 @@ func main() {
 
 	//Wait group with cpu threds
 	threads := runtime.NumCPU()
+	//We have a main thread already.
+	if threads > 1 {
+		threads--
+	}
 	swg := sizedwaitgroup.New(threads)
 	log.Println("Starting", threads, "threads.")
 
@@ -55,11 +59,10 @@ func main() {
 
 	//Start checking:
 	log.Println("Checking for n=x primes: ")
-	for x = z; x < 9223372036854775807; x++ {
+	for x = z + 1; x < 9223372036854775807; x++ {
 
-		//log.Print("Shifting digits...")
 		//Shift over digits
-		toAdd := int64(math.Pow(10, float64(len(strconv.FormatInt(x, 10)))) * 10)
+		toAdd := int64(math.Pow(10, float64(len(strconv.FormatInt(x, 10)))))
 		temp.Mul(temp, big.NewInt(toAdd))
 		//Add value
 		temp.Add(temp, big.NewInt(x))
@@ -68,7 +71,7 @@ func main() {
 		ntemp.Set(temp)
 		swg.Add()
 		go func(x int64, ntemp *big.Int) {
-			fmt.Print("Checking n=", x, ", ")
+			//fmt.Print("Checking n=", x, ", ")
 
 			if temp.ProbablyPrime(0) {
 				log.Println("POSSIBLE PRIME: n=", x)
@@ -82,6 +85,8 @@ func main() {
 			}
 			swg.Done()
 		}(x, ntemp)
+		//fmt.Println(ntemp)
+		//fmt.Println("")
 	}
 	swg.Wait()
 }
