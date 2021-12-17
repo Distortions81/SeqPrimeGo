@@ -15,7 +15,7 @@ import (
 	"github.com/remeh/sizedwaitgroup"
 )
 
-const startNPrime = 2
+const startNPrime = 1002000
 
 func main() {
 
