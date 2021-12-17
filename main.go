@@ -51,9 +51,11 @@ func main() {
 		swg.Add()
 		go func(val int64, valStr bytes.Buffer) {
 
+			fmt.Print("Making big.int for n=", val, ", ")
 			temp := big.NewInt(0)
 			temp.SetString(valStr.String(), 10)
 
+			fmt.Print("Checking n=", x, ", ")
 			if temp.ProbablyPrime(0) {
 				log.Println("POSSIBLE PRIME, VERIFYING: n=", val)
 				isPrime(val, temp)
