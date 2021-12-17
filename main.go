@@ -19,8 +19,8 @@ const startNPrime = 1002000
 
 func main() {
 
-	//Init
-	var x int64 = startNPrime
+	//Vars
+	var x int64 = startNPrime - 1
 	var buf bytes.Buffer
 
 	//Logging setup
@@ -31,6 +31,7 @@ func main() {
 		return
 	}
 	defer lf.Close()
+	//Write to log and stdout
 	mw := io.MultiWriter(os.Stdout, lf)
 	log.SetOutput(mw)
 
@@ -41,7 +42,7 @@ func main() {
 		threads--
 	}
 	swg := sizedwaitgroup.New(threads)
-	log.Println("Starting", threads, "threads.")
+	log.Println("Starting", threads, " new threads.")
 
 	//Create inital big.int string
 	log.Println("Creating first big int buffer for n=", x)
@@ -49,9 +50,8 @@ func main() {
 	for z = 1; z < x; z++ {
 		buf.WriteString(strconv.FormatInt(z, 10))
 	}
-	log.Println("Buffer size:", humanize.Bytes(uint64(buf.Len())))
-
 	buf.WriteString(strconv.FormatInt(x, 10))
+	log.Println("Buffer size:", humanize.Bytes(uint64(buf.Len())))
 
 	log.Println("Making big.int for n=", z)
 	temp := big.NewInt(0)
@@ -61,17 +61,21 @@ func main() {
 	log.Println("Checking for n=x primes: ")
 	for x = z + 1; x < 9223372036854775807; x++ {
 
-		//Shift over digits
+		//Shift over digits, this is insanely faster than re-serializing the big.int
+		//Calculate how many digits we need to move over
 		toAdd := int64(math.Pow(10, float64(len(strconv.FormatInt(x, 10)))))
+		//Mutiply to move required number of digits, for our new number
 		temp.Mul(temp, big.NewInt(toAdd))
-		//Add value
+		//Add our new digits
 		temp.Add(temp, big.NewInt(x))
 
+		//Make a copy of the bigint, because they are pointers
 		ntemp := big.NewInt(0)
 		ntemp.Set(temp)
+
+		//Add to wait group
 		swg.Add()
 		go func(x int64, ntemp *big.Int) {
-			//fmt.Print("Checking n=", x, ", ")
 
 			if temp.ProbablyPrime(0) {
 				log.Println("POSSIBLE PRIME: n=", x)
@@ -83,10 +87,9 @@ func main() {
 				//Print failure, do not log
 				fmt.Print("!n=", x, ", ")
 			}
+			//Remove self from waitgroup
 			swg.Done()
 		}(x, ntemp)
-		//fmt.Println(ntemp)
-		//fmt.Println("")
 	}
 	swg.Wait()
 }
