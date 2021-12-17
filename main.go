@@ -53,7 +53,7 @@ func main() {
 			temp := big.NewInt(0)
 			temp.SetString(buf, 10)
 
-			if temp.ProbablyPrime(20) {
+			if temp.ProbablyPrime(0) {
 				log.Println("POSSIBLE PRIME: n=", val)
 				isPrime(val, temp)
 			}
