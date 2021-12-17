@@ -9,11 +9,13 @@ import (
 	"github.com/remeh/sizedwaitgroup"
 )
 
-const startNPrime = 1
+const startNPrime = 2445
 
 func main() {
-	var x int64 = 2446
+	//Starting n=X
+	var x int64 = 0
 
+	//Wait group with cpu threds
 	swg := sizedwaitgroup.New(runtime.NumCPU())
 	fmt.Println("Starting", runtime.NumCPU(), "threads.")
 
@@ -26,7 +28,7 @@ func main() {
 			buf := ""
 			var y int64 = 0
 			// Count up
-			for y = 1; y < x; y++ {
+			for y = 1; y < val; y++ {
 				buf = buf + strconv.FormatInt(y, 10)
 			}
 			//Count down
@@ -37,7 +39,10 @@ func main() {
 			temp := big.NewInt(0)
 			temp.SetString(buf, 10)
 
-			isPrime(x, temp)
+			if temp.ProbablyPrime(20) {
+				fmt.Println("POSSIBLE PRIME: n=", val)
+				isPrime(val, temp)
+			}
 			swg.Done()
 		}(x)
 	}
