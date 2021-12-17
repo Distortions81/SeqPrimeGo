@@ -12,7 +12,7 @@ import (
 	"github.com/remeh/sizedwaitgroup"
 )
 
-const startNPrime = 2444
+const startNPrime = 1000000
 
 func main() {
 	//Logging setup
