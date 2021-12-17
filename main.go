@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"strconv"
 
+	"github.com/dustin/go-humanize"
 	"github.com/remeh/sizedwaitgroup"
 )
 
@@ -33,15 +34,17 @@ func main() {
 	log.SetOutput(mw)
 
 	//Wait group with cpu threds
-	swg := sizedwaitgroup.New(runtime.NumCPU())
-	log.Println("Starting", runtime.NumCPU(), "threads.")
+	threads := runtime.NumCPU() / 2
+	swg := sizedwaitgroup.New(threads)
+	log.Println("Starting", threads, "threads.")
 
 	//Create inital big.int string
-	log.Println("Creating first big.int for n=", x)
+	log.Println("Creating first big int buffer for n=", x)
 	var z int64 = 0
 	for z = 1; z <= x; z++ {
 		buf.WriteString(strconv.FormatInt(z, 10))
 	}
+	log.Println("Buffer size:", humanize.Bytes(uint64(buf.Len())))
 
 	//Start checking:
 	log.Println("Checking for n=x primes: ")
@@ -49,11 +52,11 @@ func main() {
 
 		buf.WriteString(strconv.FormatInt(x, 10))
 		swg.Add()
-		go func(val int64, valStr bytes.Buffer) {
+		go func(val int64, valStr string) {
 
 			fmt.Print("Making big.int for n=", val, ", ")
 			temp := big.NewInt(0)
-			temp.SetString(valStr.String(), 10)
+			temp.SetString(valStr, 10)
 
 			fmt.Print("Checking n=", x, ", ")
 			if temp.ProbablyPrime(0) {
@@ -67,7 +70,7 @@ func main() {
 				fmt.Print("!n=", val, ", ")
 			}
 			swg.Done()
-		}(x, buf)
+		}(x, buf.String())
 	}
 	swg.Wait()
 }
