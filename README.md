@@ -1,3 +1,3 @@
 # SeqPrimeGo
 
-This checks for seqential-number primes
+This checks for seqential-number-sequence primes (in base10)
