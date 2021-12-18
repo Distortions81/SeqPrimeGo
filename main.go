@@ -18,7 +18,7 @@ import (
 //Constants/vars
 const startNPrime = 1000000
 const debug = true
-const debugInterval = 1000
+const debugInterval = 10000
 const logName = "nPrimes.log"
 
 //Number of big.Ints to buffer up, this is single-threaded and needs the buffer.
