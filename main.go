@@ -10,86 +10,72 @@ import (
 	"os"
 	"runtime"
 	"strconv"
+	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/remeh/sizedwaitgroup"
 )
 
-const startNPrime = 1002000
+const startNPrime = 1000000
+const debug = true
+const logName = "nPrimes.log"
+const reportSeconds = 60
+
+var lastReport time.Time
 
 func main() {
 
 	//Vars
 	var x int64 = startNPrime - 1
+	var z int64 = 0
 	var buf bytes.Buffer
+	lastReport = time.Now()
 
 	//Logging setup
-	logName := "nPrimes.log"
 	lf, err := os.OpenFile(logName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Println("Error opening file:", err)
 		return
 	}
 	defer lf.Close()
-	//Write to log and stdout
-	mw := io.MultiWriter(os.Stdout, lf)
+	mw := io.MultiWriter(os.Stdout, lf) //log and stdout
 	log.SetOutput(mw)
 
-	//Wait group with cpu threds
-	threads := runtime.NumCPU()
-	//We have a main thread already.
-	if threads > 1 {
-		threads--
-	}
-	swg := sizedwaitgroup.New(threads)
-	log.Println("Starting", threads, " new threads.")
-
-	//Create inital big.int string
-	log.Println("Creating first big int buffer for n=", x)
-	var z int64 = 0
+	//Preperation
+	log.Println("Creating string for n=", x+1)
 	for z = 1; z < x; z++ {
 		buf.WriteString(strconv.FormatInt(z, 10))
 	}
 	buf.WriteString(strconv.FormatInt(x, 10))
-	log.Println("Buffer size:", humanize.Bytes(uint64(buf.Len())))
-
-	log.Println("Making big.int for n=", z)
-	temp := big.NewInt(0)
-	temp.SetString(buf.String(), 10)
-
-	//Start checking:
+	log.Println("String size:", humanize.Bytes(uint64(buf.Len())))
+	log.Println("Making big.int for n=", x+1)
+	var bigPrime big.Int
+	bigPrime.SetString(buf.String(), 10)
 	log.Println("Checking for n=x primes: ")
-	for x = z + 1; x < 9223372036854775807; x++ {
 
-		//Shift over digits, this is insanely faster than re-serializing the big.int
-		//Calculate how many digits we need to move over
-		toAdd := int64(math.Pow(10, float64(len(strconv.FormatInt(x, 10)))))
-		//Mutiply to move required number of digits, for our new number
-		temp.Mul(temp, big.NewInt(toAdd))
-		//Add our new digits
-		temp.Add(temp, big.NewInt(x))
+	//Wait group with cpu threds
+	threads := runtime.NumCPU()
+	swg := sizedwaitgroup.New(threads)
+	log.Println("Starting", threads, "new threads.")
 
-		//Make a copy of the bigint, because they are pointers
-		ntemp := big.NewInt(0)
-		ntemp.Set(temp)
+	for x = startNPrime; x < 9223372036854775807; x++ {
+
+		shiftDigits(&bigPrime, x)
 
 		//Add to wait group
 		swg.Add()
-		go func(x int64, ntemp *big.Int) {
+		go func(lx int64, nbp big.Int) {
+			defer swg.Done()
 
-			if temp.ProbablyPrime(0) {
-				log.Println("POSSIBLE PRIME: n=", x)
-				if temp.ProbablyPrime(20) {
-					log.Println("PROBABLE PRIME, VERIFYING: n=", x)
-					isPrime(x, temp)
+			isdebug(fmt.Sprintf("n=%v, ", lx))
+			if nbp.ProbablyPrime(0) {
+				log.Println("POSSIBLE PRIME: n=", lx)
+				if nbp.ProbablyPrime(20) {
+					log.Println("PROBABLE PRIME, VERIFYING: n=", lx)
+					isPrime(lx, &nbp)
 				}
-			} else {
-				//Print failure, do not log
-				fmt.Print("!n=", x, ", ")
 			}
-			//Remove self from waitgroup
-			swg.Done()
-		}(x, ntemp)
+		}(x, bigPrime)
 	}
 	swg.Wait()
 }
@@ -107,4 +93,21 @@ func isPrime(x int64, num *big.Int) bool {
 	}
 	log.Println("\n***** n=", x, " is prime! *****")
 	return true
+}
+
+func isdebug(str string) {
+	if debug && time.Since(lastReport) > reportSeconds*time.Second {
+		fmt.Print(str)
+		lastReport = time.Now()
+	}
+}
+
+func shiftDigits(bigPrime *big.Int, x int64) {
+	//Shift over digits, this is faster than re-serializing the big.int
+	//Calculate how many digits we need to move over
+	toAdd := int64(math.Pow(10, float64(len(strconv.FormatInt(x, 10)))))
+	//Mutiply to move required number of digits, for our new number
+	bigPrime.Mul(bigPrime, big.NewInt(toAdd))
+	//Add our new digits
+	bigPrime.Add(bigPrime, big.NewInt(x))
 }
