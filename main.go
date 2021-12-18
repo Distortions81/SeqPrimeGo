@@ -8,8 +8,8 @@ import (
 	"math"
 	"math/big"
 	"os"
+	"runtime"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -20,11 +20,8 @@ import (
 const startNPrime = 1000000
 const debug = true
 const logName = "nPrimes.log"
-const reportSeconds = 2 * time.Second
-const maxPrecalc = 128
-
-var lastReport time.Time
-var lrLock sync.Mutex
+const reportSeconds = 100 * time.Millisecond
+const maxPrecalc = 1024
 
 func main() {
 
@@ -32,7 +29,6 @@ func main() {
 	var x int64 = startNPrime - 1
 	var z int64 = 0
 	var buf bytes.Buffer
-	lastReport = time.Now()
 
 	//Logging setup
 	lf, err := os.OpenFile(logName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
@@ -57,31 +53,33 @@ func main() {
 	log.Println("Checking for n=x primes: ")
 
 	//Wait group with cpu threds
-	//threads := runtime.NumCPU()
-	threads := 256
+	threads := runtime.NumCPU()
 	swg := sizedwaitgroup.New(threads)
 	pcg := sizedwaitgroup.New(maxPrecalc)
+	log.Println(fmt.Sprintf("Detected %v vCPUs.", threads))
 
+	//We basically buffer up a ton of big.ints we can process when a open thread appears
 	for x = startNPrime; x < 9223372036854775807; x++ {
+		pcg.Add() //Precalculate next n, within limits
 
-		pcg.Add()
-		defer pcg.Done()
-		shiftDigits(&bigPrime, x)
-		isDebug(fmt.Sprintf("PREP: n=%v, ", x))
+		shiftDigits(&bigPrime, x) //Modifying big.int is slow
+
 		go func(lx int64, nbp big.Int) {
-			swg.Add()
-			defer swg.Done()
+			swg.Add() //We are ready, but wait our turn
 
-			isDebug(fmt.Sprintf("CALC: n=%v, ", lx))
 			if nbp.ProbablyPrime(0) {
-				log.Println("POSSIBLE PRIME: n=", lx)
+				log.Println(fmt.Sprintf("* POSSIBLE PRIME: n=%v *", lx))
 				if nbp.ProbablyPrime(20) {
-					log.Println("PROBABLE PRIME, VERIFYING: n=", lx)
+					log.Println(fmt.Sprintf("** PROBABLE PRIME: n=%v **", lx))
 					isPrime(lx, &nbp)
 				}
 			}
+			//Done, let new threads run
+			pcg.Done()
+			swg.Done()
 		}(x, bigPrime)
 	}
+	//Wait for everything to finish before exiting.
 	pcg.Wait()
 	swg.Wait()
 }
@@ -93,23 +91,12 @@ func isPrime(x int64, num *big.Int) bool {
 
 	for i.SetString("2", 10); i.Cmp(iSq) == -1; i.Add(i, big.NewInt(1)) {
 		if num.Mod(num, i) == big.NewInt(0) {
-			log.Println("*** NOT PRIME *** n=", x, " divisible by", i, ", ")
+			log.Println(fmt.Sprintf("*** NOT PRIME: n=%v is divisible by %v ***", x, i))
 			return false
 		}
 	}
-	log.Println("\n***** n=", x, " is prime! *****")
+	log.Println(fmt.Sprintf("*** VERIFIED PRIME: n=%v ***", x))
 	return true
-}
-
-func isDebug(str string) {
-	if debug {
-		lrLock.Lock()
-		if time.Since(lastReport) > reportSeconds {
-			fmt.Print(str)
-			lastReport = time.Now()
-		}
-		lrLock.Unlock()
-	}
 }
 
 func shiftDigits(bigPrime *big.Int, x int64) {
