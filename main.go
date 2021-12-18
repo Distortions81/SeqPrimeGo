@@ -10,7 +10,6 @@ import (
 	"os"
 	"runtime"
 	"strconv"
-	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/remeh/sizedwaitgroup"
@@ -20,8 +19,9 @@ import (
 const startNPrime = 1000000
 const debug = true
 const logName = "nPrimes.log"
-const reportSeconds = 100 * time.Millisecond
-const maxPrecalc = 1024
+
+//Number of big.Ints to buffer up, this is single-threaded and needs the buffer.
+const maxPrecalc = 512
 
 func main() {
 
@@ -54,6 +54,10 @@ func main() {
 
 	//Wait group with cpu threds
 	threads := runtime.NumCPU()
+	//Don't include main thread
+	if threads > 1 {
+		threads--
+	}
 	swg := sizedwaitgroup.New(threads)
 	pcg := sizedwaitgroup.New(maxPrecalc)
 	log.Println(fmt.Sprintf("Detected %v vCPUs.", threads))
