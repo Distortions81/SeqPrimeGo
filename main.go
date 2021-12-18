@@ -16,6 +16,7 @@ import (
 	"github.com/remeh/sizedwaitgroup"
 )
 
+//Constants/vars
 const startNPrime = 1000000
 const debug = true
 const logName = "nPrimes.log"
@@ -67,7 +68,7 @@ func main() {
 		go func(lx int64, nbp big.Int) {
 			defer swg.Done()
 
-			isdebug(fmt.Sprintf("n=%v, ", lx))
+			isDebug(fmt.Sprintf("n=%v, ", lx))
 			if nbp.ProbablyPrime(0) {
 				log.Println("POSSIBLE PRIME: n=", lx)
 				if nbp.ProbablyPrime(20) {
@@ -95,7 +96,7 @@ func isPrime(x int64, num *big.Int) bool {
 	return true
 }
 
-func isdebug(str string) {
+func isDebug(str string) {
 	if debug && time.Since(lastReport) > reportSeconds*time.Second {
 		fmt.Print(str)
 		lastReport = time.Now()
