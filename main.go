@@ -8,8 +8,8 @@ import (
 	"math"
 	"math/big"
 	"os"
-	"runtime"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -20,9 +20,10 @@ import (
 const startNPrime = 1000000
 const debug = true
 const logName = "nPrimes.log"
-const reportSeconds = 2
+const reportSeconds = 2 * time.Second
 
 var lastReport time.Time
+var lrLock sync.Mutex
 
 func main() {
 
@@ -55,16 +56,15 @@ func main() {
 	log.Println("Checking for n=x primes: ")
 
 	//Wait group with cpu threds
-	threads := runtime.NumCPU()
+	//threads := runtime.NumCPU()
+	threads := 256
 	swg := sizedwaitgroup.New(threads)
-	log.Println("Starting", threads, "new threads.")
 
 	for x = startNPrime; x < 9223372036854775807; x++ {
-
-		shiftDigits(&bigPrime, x)
-
 		//Add to wait group
 		swg.Add()
+
+		shiftDigits(&bigPrime, x)
 		go func(lx int64, nbp big.Int) {
 			defer swg.Done()
 
@@ -98,10 +98,12 @@ func isPrime(x int64, num *big.Int) bool {
 
 func isDebug(str string) {
 	if debug {
-		if time.Since(lastReport) > reportSeconds*time.Second {
+		lrLock.Lock()
+		if time.Since(lastReport) > reportSeconds {
 			fmt.Print(str)
 			lastReport = time.Now()
 		}
+		lrLock.Unlock()
 	}
 }
 
