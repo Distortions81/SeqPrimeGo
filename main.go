@@ -21,6 +21,7 @@ const startNPrime = 1000000
 const debug = true
 const logName = "nPrimes.log"
 const reportSeconds = 2 * time.Second
+const maxPrecalc = 128
 
 var lastReport time.Time
 var lrLock sync.Mutex
@@ -59,16 +60,19 @@ func main() {
 	//threads := runtime.NumCPU()
 	threads := 256
 	swg := sizedwaitgroup.New(threads)
+	pcg := sizedwaitgroup.New(maxPrecalc)
 
 	for x = startNPrime; x < 9223372036854775807; x++ {
-		//Add to wait group
-		swg.Add()
 
+		pcg.Add()
+		defer pcg.Done()
 		shiftDigits(&bigPrime, x)
+		isDebug(fmt.Sprintf("PREP: n=%v, ", x))
 		go func(lx int64, nbp big.Int) {
+			swg.Add()
 			defer swg.Done()
 
-			isDebug(fmt.Sprintf("n=%v, ", lx))
+			isDebug(fmt.Sprintf("CALC: n=%v, ", lx))
 			if nbp.ProbablyPrime(0) {
 				log.Println("POSSIBLE PRIME: n=", lx)
 				if nbp.ProbablyPrime(20) {
@@ -78,6 +82,7 @@ func main() {
 			}
 		}(x, bigPrime)
 	}
+	pcg.Wait()
 	swg.Wait()
 }
 
