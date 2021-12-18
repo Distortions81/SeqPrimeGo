@@ -55,7 +55,7 @@ func main() {
 	log.Println("Checking for n=x primes: ")
 
 	//Wait group with cpu threds
-	threads := runtime.NumCPU()
+	threads := runtime.NumCPU() * 10
 	swg := sizedwaitgroup.New(threads)
 	log.Println("Starting", threads, "new threads.")
 
