@@ -20,7 +20,7 @@ import (
 const startNPrime = 1000000
 const debug = true
 const logName = "nPrimes.log"
-const reportSeconds = 60
+const reportSeconds = 2
 
 var lastReport time.Time
 
