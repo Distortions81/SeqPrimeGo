@@ -97,9 +97,11 @@ func isPrime(x int64, num *big.Int) bool {
 }
 
 func isDebug(str string) {
-	if debug && time.Since(lastReport) > reportSeconds*time.Second {
-		fmt.Print(str)
-		lastReport = time.Now()
+	if debug {
+		if time.Since(lastReport) > reportSeconds*time.Second {
+			fmt.Print(str)
+			lastReport = time.Now()
+		}
 	}
 }
 
