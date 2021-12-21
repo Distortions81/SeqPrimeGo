@@ -18,7 +18,7 @@ import (
 //Constants/vars
 const startNPrime = 1000000
 const debug = true
-const debugInterval = 10000
+const progressInterval = 10000
 const logName = "nPrimes.log"
 
 //Number of big.Ints to buffer up, this is single-threaded and needs the buffer.
@@ -66,8 +66,8 @@ func main() {
 	//We basically buffer up a ton of big.ints we can process when a open thread appears
 	for x = startNPrime; x < 9223372036854775807; x++ {
 		pcg.Add() //Precalculate next n, within limits
-		if debug && x%debugInterval == 0 {
-			fmt.Print("n=", x, ", ")
+		if debug && x%progressInterval == 0 {
+			fmt.Print(".")
 		}
 
 		shiftDigits(&bigPrime, x) //Modifying big.int is slow
