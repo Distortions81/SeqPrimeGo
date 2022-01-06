@@ -4,25 +4,37 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"math"
 	"math/big"
 	"os"
 	"runtime"
 	"strconv"
+	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/remeh/sizedwaitgroup"
 )
 
 //Constants/vars
-const startNPrime = 1000000
-const debug = true
-const progressInterval = 1000000
+var startNPrime int64 = 1000000
+
 const logName = "nPrimes.log"
 
 //Number of big.Ints to buffer up, this is single-threaded and needs the buffer.
 const maxPrecalc = 512
+
+/* Progress reports */
+const progressFile = "progress.dat"
+const progressInterval = 30 * time.Second
+
+var lastProgress = time.Now()
+
+/* Save progress to file */
+const saveInterval = 10 * time.Minute
+
+var lastSave = time.Now()
 
 func main() {
 
@@ -30,6 +42,18 @@ func main() {
 	var x int64 = startNPrime - 1
 	var z int64 = 0
 	var buf bytes.Buffer
+	var number int64 = 0
+
+	prog, err := os.ReadFile(progressFile)
+	if err != nil {
+		log.Println("No progress file found, starting from scratch")
+	} else {
+		number, err = strconv.ParseInt(string(prog), 10, 64)
+		if err != nil {
+			log.Println("Error reading progress file, starting from scratch")
+		}
+		startNPrime = number - 1
+	}
 
 	//Logging setup
 	lf, err := os.OpenFile(logName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
@@ -53,7 +77,7 @@ func main() {
 	bigPrime.SetString(buf.String(), 10)
 	log.Println("Checking for n=x primes: ")
 
-	//Wait group with cpu threds
+	//Wait group with cpu threads
 	threads := runtime.NumCPU()
 	//Don't include main thread
 	if threads > 1 {
@@ -66,8 +90,17 @@ func main() {
 	//We basically buffer up a ton of big.ints we can process when a open thread appears
 	for x = startNPrime; x < 9223372036854775807; x++ {
 		pcg.Add() //Precalculate next n, within limits
-		if debug && x%progressInterval == 0 {
-			fmt.Print(".")
+		if time.Since(lastProgress) > progressInterval {
+			log.Println(" n=", x)
+			lastProgress = time.Now()
+		}
+		if time.Since(lastSave) > saveInterval {
+			//log.Println("Saving progress")
+			err = ioutil.WriteFile(progressFile, []byte(strconv.FormatInt(x, 10)), 0644)
+			if err != nil {
+				log.Println("Error saving progress:", err)
+			}
+			lastSave = time.Now()
 		}
 
 		shiftDigits(&bigPrime, x) //Modifying big.int is slow
@@ -86,6 +119,7 @@ func main() {
 			pcg.Done()
 			swg.Done()
 		}(x, bigPrime)
+
 	}
 	//Wait for everything to finish before exiting.
 	pcg.Wait()
