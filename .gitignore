@@ -2,3 +2,4 @@ nPrimes.log
 *.exe
 *.bin
 SeqPrimeGo
+progress.dat
