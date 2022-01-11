@@ -31,11 +31,6 @@ const progressInterval = 30 * time.Second
 
 var lastProgress = time.Now()
 
-/* Save progress to file */
-const saveInterval = 10 * time.Minute
-
-var lastSave = time.Now()
-
 func main() {
 
 	//Vars
@@ -93,14 +88,13 @@ func main() {
 		if time.Since(lastProgress) > progressInterval {
 			log.Println(" n=", x)
 			lastProgress = time.Now()
-		}
-		if time.Since(lastSave) > saveInterval {
+
 			//log.Println("Saving progress")
 			err = ioutil.WriteFile(progressFile, []byte(strconv.FormatInt(x, 10)), 0644)
 			if err != nil {
 				log.Println("Error saving progress:", err)
 			}
-			lastSave = time.Now()
+			lastProgress = time.Now()
 		}
 
 		shiftDigits(&bigPrime, x) //Modifying big.int is slow
