@@ -89,8 +89,6 @@ func main() {
 	for x = startNPrime; x < 9223372036854775807; x++ {
 		pcg.Add() //Precalculate next n, within limits
 
-		progressReport(x, "shift:")
-
 		shiftDigits(&bigPrime, x) //Modifying big.int is slow
 
 		go func(lx int64, nbp big.Int) {
@@ -136,8 +134,11 @@ func shiftDigits(bigPrime *big.Int, x int64) {
 	//Shift over digits, this is faster than re-serializing the big.int
 	//Calculate how many digits we need to move over
 	toAdd := int64(math.Pow(10, float64(len(strconv.FormatInt(x, 10)))))
+
+	progressReport(x, "mult:")
 	//Mutiply to move required number of digits, for our new number
 	bigPrime.Mul(bigPrime, big.NewInt(toAdd))
+	progressReport(x, "add:")
 	//Add our new digits
 	bigPrime.Add(bigPrime, big.NewInt(x))
 }
