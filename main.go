@@ -11,6 +11,7 @@ import (
 	"os"
 	"runtime"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -29,7 +30,8 @@ const maxPrecalc = 512
 const progressFile = "progress.dat"
 const progressInterval = 30 * time.Second
 
-var lastProgress = time.Now()
+var lastProgress time.Time
+var progressLock sync.Mutex
 
 func main() {
 
@@ -38,6 +40,7 @@ func main() {
 	var z int64 = 0
 	var buf bytes.Buffer
 	var number int64 = 0
+	lastProgress = time.Now()
 
 	prog, err := os.ReadFile(progressFile)
 	if err != nil {
@@ -85,22 +88,14 @@ func main() {
 	//We basically buffer up a ton of big.ints we can process when a open thread appears
 	for x = startNPrime; x < 9223372036854775807; x++ {
 		pcg.Add() //Precalculate next n, within limits
-		if time.Since(lastProgress) > progressInterval {
-			log.Println(" n=", x)
-			lastProgress = time.Now()
 
-			//log.Println("Saving progress")
-			err = ioutil.WriteFile(progressFile, []byte(strconv.FormatInt(x, 10)), 0644)
-			if err != nil {
-				log.Println("Error saving progress:", err)
-			}
-			lastProgress = time.Now()
-		}
+		progressReport(x, "shift:")
 
 		shiftDigits(&bigPrime, x) //Modifying big.int is slow
 
 		go func(lx int64, nbp big.Int) {
 			swg.Add() //We are ready, but wait our turn
+			progressReport(lx, "ch-prob:")
 
 			if nbp.ProbablyPrime(0) {
 				log.Println(fmt.Sprintf("* POSSIBLE PRIME: n=%v *", lx))
@@ -115,6 +110,7 @@ func main() {
 		}(x, bigPrime)
 
 	}
+
 	//Wait for everything to finish before exiting.
 	pcg.Wait()
 	swg.Wait()
@@ -126,6 +122,7 @@ func isPrime(x int64, num *big.Int) bool {
 	iSq = iSq.Sqrt(num)
 
 	for i.SetString("2", 10); i.Cmp(iSq) == -1; i.Add(i, big.NewInt(1)) {
+		progressReport(x, "ch-isPrime:")
 		if num.Mod(num, i) == big.NewInt(0) {
 			log.Println(fmt.Sprintf("*** NOT PRIME: n=%v is divisible by %v ***", x, i))
 			return false
@@ -143,4 +140,19 @@ func shiftDigits(bigPrime *big.Int, x int64) {
 	bigPrime.Mul(bigPrime, big.NewInt(toAdd))
 	//Add our new digits
 	bigPrime.Add(bigPrime, big.NewInt(x))
+}
+
+func progressReport(x int64, message string) {
+	progressLock.Lock()
+	if time.Since(lastProgress) > progressInterval {
+		log.Println(message+" n=", x)
+
+		//log.Println("Saving progress")
+		err := ioutil.WriteFile(progressFile, []byte(strconv.FormatInt(x, 10)), 0644)
+		if err != nil {
+			log.Println("Error saving progress:", err)
+		}
+		lastProgress = time.Now()
+	}
+	progressLock.Unlock()
 }
