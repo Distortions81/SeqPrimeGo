@@ -36,7 +36,6 @@ var progressLock sync.Mutex
 func main() {
 
 	//Vars
-	var x int64 = startNPrime - 1
 	var z int64 = 0
 	var buf bytes.Buffer
 	var number int64 = 0
@@ -64,6 +63,7 @@ func main() {
 	log.SetOutput(mw)
 
 	//Preperation
+    var x int64 = startNPrime - 1
 	log.Println("Creating string for n=", x+1)
 	for z = 1; z < x; z++ {
 		buf.WriteString(strconv.FormatInt(z, 10))
