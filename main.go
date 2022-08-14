@@ -24,7 +24,7 @@ var startNPrime int64 = 1000000
 const logName = "nPrimes.log"
 
 // Number of big.Ints to buffer up, this is single-threaded and needs the buffer.
-const maxPrecalc = 128
+const maxPrecalc = 512
 
 /* Progress reports */
 const progressFile = "progress.dat"
