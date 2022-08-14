@@ -24,7 +24,7 @@ var startNPrime int64 = 1000000
 const logName = "nPrimes.log"
 
 // Number of big.Ints to buffer up, this is single-threaded and needs the buffer.
-const maxPrecalc = 512
+const maxPrecalc = 128
 
 /* Progress reports */
 const progressFile = "progress.dat"
@@ -49,7 +49,7 @@ func main() {
 		if err != nil {
 			log.Println("Error reading progress file, starting from scratch")
 		}
-		startNPrime = number - 1
+		startNPrime = number
 	}
 
 	//Logging setup
