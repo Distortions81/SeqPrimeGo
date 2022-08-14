@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"math"
 	"math/big"
@@ -80,7 +79,7 @@ func main() {
 
 	swg := sizedwaitgroup.New(threads)
 	pcg := sizedwaitgroup.New(maxPrecalc)
-	log.Println(fmt.Sprintf("Detected %v vCPUs.", threads))
+	log.Printf("Detected %v vCPUs.\n", threads)
 
 	//We basically buffer up a ton of big.ints we can process when a open thread appears
 	for x = startNPrime; x < 9223372036854775807; x++ {
@@ -93,9 +92,9 @@ func main() {
 			progressReport(lx, "ch-prob:")
 
 			if nbp.ProbablyPrime(0) {
-				log.Println(fmt.Sprintf("* POSSIBLE PRIME: n=%v *", lx))
+				log.Printf("* POSSIBLE PRIME: n=%v *\n", lx)
 				if nbp.ProbablyPrime(20) {
-					log.Println(fmt.Sprintf("** PROBABLE PRIME: n=%v **", lx))
+					log.Printf("** PROBABLE PRIME: n=%v **\n", lx)
 					isPrime(lx, &nbp)
 				}
 			}
@@ -119,11 +118,11 @@ func isPrime(x int64, num *big.Int) bool {
 	for i.SetString("2", 10); i.Cmp(iSq) == -1; i.Add(i, big.NewInt(1)) {
 		progressReport(x, "ch-isPrime:")
 		if num.Mod(num, i) == big.NewInt(0) {
-			log.Println(fmt.Sprintf("*** NOT PRIME: n=%v is divisible by %v ***", x, i))
+			log.Printf("*** NOT PRIME: n=%v is divisible by %v ***\n", x, i)
 			return false
 		}
 	}
-	log.Println(fmt.Sprintf("*** VERIFIED PRIME: n=%v ***", x))
+	log.Printf("*** VERIFIED PRIME: n=%v ***\n", x)
 	return true
 }
 
@@ -146,7 +145,7 @@ func progressReport(x int64, message string) {
 		log.Println(message+" n=", x)
 
 		//log.Println("Saving progress")
-		err := ioutil.WriteFile(progressFile, []byte(strconv.FormatInt(x, 10)), 0644)
+		err := os.WriteFile(progressFile, []byte(strconv.FormatInt(x, 10)), 0644)
 		if err != nil {
 			log.Println("Error saving progress:", err)
 		}
