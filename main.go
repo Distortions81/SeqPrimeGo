@@ -22,9 +22,6 @@ var startNPrime int64 = 1000000
 
 const logName = "nPrimes.log"
 
-// Number of big.Ints to buffer up, this is single-threaded and needs the buffer.
-const maxPrecalc = 512
-
 /* Progress reports */
 const progressFile = "progress.dat"
 const progressInterval = 30 * time.Second
@@ -78,7 +75,7 @@ func main() {
 	threads := runtime.NumCPU()
 
 	swg := sizedwaitgroup.New(threads)
-	pcg := sizedwaitgroup.New(maxPrecalc)
+	pcg := sizedwaitgroup.New(threads * 2)
 	log.Printf("Detected %v vCPUs.\n", threads)
 
 	//We basically buffer up a ton of big.ints we can process when a open thread appears
