@@ -18,12 +18,12 @@ import (
 	"github.com/remeh/sizedwaitgroup"
 )
 
-//Constants/vars
+// Constants/vars
 var startNPrime int64 = 1000000
 
 const logName = "nPrimes.log"
 
-//Number of big.Ints to buffer up, this is single-threaded and needs the buffer.
+// Number of big.Ints to buffer up, this is single-threaded and needs the buffer.
 const maxPrecalc = 512
 
 /* Progress reports */
@@ -63,7 +63,7 @@ func main() {
 	log.SetOutput(mw)
 
 	//Preperation
-    var x int64 = startNPrime - 1
+	var x int64 = startNPrime - 1
 	log.Println("Creating string for n=", x+1)
 	for z = 1; z < x; z++ {
 		buf.WriteString(strconv.FormatInt(z, 10))
@@ -77,10 +77,7 @@ func main() {
 
 	//Wait group with cpu threads
 	threads := runtime.NumCPU()
-	//Don't include main thread
-	if threads > 1 {
-		threads--
-	}
+
 	swg := sizedwaitgroup.New(threads)
 	pcg := sizedwaitgroup.New(maxPrecalc)
 	log.Println(fmt.Sprintf("Detected %v vCPUs.", threads))
